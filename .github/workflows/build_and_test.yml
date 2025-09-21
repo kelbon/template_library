@@ -31,15 +31,25 @@ jobs:
           elif [[ "${{ matrix.compiler }}" == clang++-18* ]]; then
             sudo apt-get install clang-18
           fi
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+        with:
+          version: "v0.10.0" # Version of the sccache binary to install
+
       - name: Configure CMake
         run: |
-          cmake .                                         \
+          cmake . -DKELBON_TEMPLATE_PROJECT_NAME_ENABLE_TESTING=ON \
             -DCMAKE_BUILD_TYPE=${{matrix.build_type}}     \
             -DCMAKE_CXX_COMPILER=${{matrix.compiler}}     \
             -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}} \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5            \
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache           \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache         \
             -B build -G "Ninja"
       - name: Build
+        env:
+          SCCACHE_GHA_ENABLED: "true"
         run: |
           cmake --build build
       - name: Test
@@ -49,13 +59,17 @@ jobs:
 
       - name: Configure CMake (ASAN)
         run:  |
-          cmake . -DKELCORO_ENABLE_TESTING=ON             \
+          cmake . -DKELBON_TEMPLATE_PROJECT_NAME_ENABLE_TESTING=ON \
             -DCMAKE_BUILD_TYPE=${{matrix.build_type}}     \
             -DCMAKE_CXX_COMPILER=${{matrix.compiler}}     \
             -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}} \
             -DKELBON_TEMPLATE_PROJECT_NAME_ENABLE_ASAN=ON  \
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache           \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache         \
             -B build_asan -G "Ninja"
       - name: Build (ASAN)
+        env:
+          SCCACHE_GHA_ENABLED: "true"
         run:
           cmake --build build_asan
       - name: Test (ASAN)
@@ -65,13 +79,17 @@ jobs:
 
       - name: Configure CMake (UBSAN)
         run:  |
-          cmake . -DKELCORO_ENABLE_TESTING=ON             \
+          cmake . -DKELBON_TEMPLATE_PROJECT_NAME_ENABLE_TESTING=ON \
             -DCMAKE_BUILD_TYPE=${{matrix.build_type}}     \
             -DCMAKE_CXX_COMPILER=${{matrix.compiler}}     \
             -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}} \
             -DKELBON_TEMPLATE_PROJECT_NAME_ENABLE_UBSAN=ON  \
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache           \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache         \
             -B build_ubsan -G "Ninja"
       - name: Build (UBSAN)
+        env:
+          SCCACHE_GHA_ENABLED: "true"
         run:
           cmake --build build_ubsan
 
